@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="830" viewBox="0 0 960 830" font-family="Segoe UI, Arial, sans-serif">
+  <!-- explicit background so the diagram stays legible in dark-mode viewers -->
+  <rect x="0" y="0" width="960" height="830" fill="#ffffff"/>
+
+  <text x="480" y="34" text-anchor="middle" font-size="20" font-weight="bold" fill="#202124">Temperature Monitor — Architecture</text>
+  <text x="480" y="54" text-anchor="middle" font-size="12" fill="#5f6368">3 layers, 1 hard boundary: the HAL contract</text>
+
+  <!-- ================= APP layer ================= -->
+  <rect x="40" y="70" width="880" height="140" rx="8" fill="#e8f0fe" stroke="#aecbfa"/>
+  <text x="52" y="90" font-size="12" font-weight="bold" fill="#1a56b4">APP</text>
+
+  <rect x="80" y="100" width="330" height="92" rx="6" fill="#ffffff" stroke="#5f6368"/>
+  <text x="245" y="122" text-anchor="middle" font-size="14" font-weight="bold" fill="#202124">main.c</text>
+  <text x="245" y="146" text-anchor="middle" font-size="12" fill="#3c4043">boot sequence · superloop</text>
+  <text x="245" y="166" text-anchor="middle" font-size="12" fill="#3c4043">terminal CONFIG-ERROR state</text>
+
+  <rect x="550" y="100" width="330" height="92" rx="6" fill="#ffffff" stroke="#5f6368"/>
+  <text x="715" y="122" text-anchor="middle" font-size="14" font-weight="bold" fill="#202124">classify.c</text>
+  <text x="715" y="146" text-anchor="middle" font-size="12" fill="#3c4043">PURE function: temp_dC → LedState</text>
+  <text x="715" y="166" text-anchor="middle" font-size="12" fill="#3c4043">owns thresholds 850 / 1050 / 50 dC</text>
+
+  <line x1="410" y1="146" x2="544" y2="146" stroke="#5f6368" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="477" y="138" text-anchor="middle" font-size="11" fill="#5f6368">calls</text>
+
+  <!-- ================= SERVICES layer ================= -->
+  <rect x="40" y="240" width="880" height="150" rx="8" fill="#e6f4ea" stroke="#a8dab5"/>
+  <text x="52" y="260" font-size="12" font-weight="bold" fill="#137333">SERVICES</text>
+
+  <rect x="80" y="272" width="250" height="100" rx="6" fill="#ffffff" stroke="#5f6368"/>
+  <text x="205" y="294" text-anchor="middle" font-size="14" font-weight="bold" fill="#202124">sensor.c</text>
+  <text x="205" y="314" text-anchor="middle" font-size="12" fill="#3c4043">raw digits → temp_dC</text>
+  <text x="205" y="331" text-anchor="middle" font-size="12" fill="#3c4043">owns scale ×10 / ×1</text>
+  <text x="205" y="348" text-anchor="middle" font-size="12" fill="#3c4043">owns 1-word mailbox</text>
+  <text x="205" y="365" text-anchor="middle" font-size="12" fill="#3c4043">Sensor_AdcIsr()</text>
+
+  <rect x="360" y="272" width="240" height="100" rx="6" fill="#ffffff" stroke="#5f6368"/>
+  <text x="480" y="294" text-anchor="middle" font-size="14" font-weight="bold" fill="#202124">config.c</text>
+  <text x="480" y="314" text-anchor="middle" font-size="12" fill="#3c4043">EEPROM → {rev, serial}</text>
+  <text x="480" y="331" text-anchor="middle" font-size="12" fill="#3c4043">owns byte layout</text>
+  <text x="480" y="348" text-anchor="middle" font-size="12" fill="#3c4043">validation: rev ∈ {0,1}</text>
+  <text x="480" y="365" text-anchor="middle" font-size="12" fill="#3c4043">read once at boot</text>
+
+  <rect x="630" y="272" width="250" height="100" rx="6" fill="#ffffff" stroke="#5f6368"/>
+  <text x="755" y="294" text-anchor="middle" font-size="14" font-weight="bold" fill="#202124">led_panel.c</text>
+  <text x="755" y="314" text-anchor="middle" font-size="12" fill="#3c4043">LedState → 3 GPIOs</text>
+  <text x="755" y="331" text-anchor="middle" font-size="12" fill="#3c4043">owns pin map</text>
+  <text x="755" y="348" text-anchor="middle" font-size="12" fill="#3c4043">boot: all OFF · error: all ON</text>
+  <text x="755" y="365" text-anchor="middle" font-size="12" fill="#3c4043">writes only on state change</text>
+
+  <!-- main.c -> services arrows -->
+  <line x1="185" y1="192" x2="195" y2="266" stroke="#5f6368" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="300" y1="192" x2="450" y2="266" stroke="#5f6368" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="390" y1="192" x2="720" y2="266" stroke="#5f6368" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="150" y="228" font-size="11" fill="#5f6368">reads temp</text>
+  <text x="392" y="222" font-size="11" fill="#5f6368">loads config</text>
+  <text x="600" y="216" font-size="11" fill="#5f6368">drives LEDs</text>
+
+  <!-- ================= HAL layer ================= -->
+  <rect x="40" y="420" width="880" height="170" rx="8" fill="#fef7e0" stroke="#fbd77f"/>
+  <text x="52" y="440" font-size="12" font-weight="bold" fill="#b06000">HAL — the hard boundary: app/services include ONLY these headers</text>
+
+  <rect x="80" y="452" width="800" height="44" rx="6" fill="#ffffff" stroke="#5f6368"/>
+  <text x="480" y="470" text-anchor="middle" font-size="13" font-weight="bold" fill="#202124">HAL CONTRACT (headers only)</text>
+  <text x="480" y="488" text-anchor="middle" font-size="12" fill="#3c4043">hal_adc.h · hal_timer.h · hal_eeprom.h · hal_gpio.h</text>
+
+  <!-- services -> HAL arrows -->
+  <line x1="205" y1="372" x2="230" y2="446" stroke="#5f6368" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="480" y1="372" x2="480" y2="446" stroke="#5f6368" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="755" y1="372" x2="730" y2="446" stroke="#5f6368" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="480" y="410" text-anchor="middle" font-size="11" fill="#5f6368">downward calls only</text>
+
+  <rect x="80" y="530" width="380" height="50" rx="6" fill="#ffffff" stroke="#137333" stroke-width="1.5"/>
+  <text x="270" y="560" text-anchor="middle" font-size="13" font-weight="bold" fill="#137333">hal/mock/*.c — PC build</text>
+
+  <rect x="500" y="530" width="380" height="50" rx="6" fill="#ffffff" stroke="#5f6368" stroke-dasharray="6 3"/>
+  <text x="690" y="560" text-anchor="middle" font-size="13" font-weight="bold" fill="#5f6368">hal/stm32/*.c — target skeleton</text>
+
+  <text x="480" y="522" text-anchor="middle" font-size="12" font-weight="bold" fill="#b06000">linked EITHER / OR — selected at LINK TIME in the Makefile, no #ifdef</text>
+
+  <!-- ISR upward path -->
+  <path d="M 895 560 C 952 430, 952 252, 620 226 C 460 214, 310 230, 252 264" fill="none" stroke="#c5221f" stroke-width="2" stroke-dasharray="7 4" marker-end="url(#arrowRed)"/>
+  <text x="946" y="440" text-anchor="middle" font-size="11" fill="#c5221f" transform="rotate(90 946 440)">EOC ISR → mailbox: the ONLY upward call</text>
+
+  <!-- ================= Data flow strip ================= -->
+  <text x="52" y="640" font-size="14" font-weight="bold" fill="#202124">Data flow — one sample, timer trigger → LED</text>
+
+  <rect x="40" y="660" width="132" height="64" rx="6" fill="#e8f0fe" stroke="#5f6368"/>
+  <text x="106" y="684" text-anchor="middle" font-size="12" font-weight="bold" fill="#202124">HW timer</text>
+  <text x="106" y="702" text-anchor="middle" font-size="11" fill="#3c4043">100 µs period</text>
+
+  <rect x="192" y="660" width="132" height="64" rx="6" fill="#e8f0fe" stroke="#5f6368"/>
+  <text x="258" y="684" text-anchor="middle" font-size="12" font-weight="bold" fill="#202124">ADC</text>
+  <text x="258" y="702" text-anchor="middle" font-size="11" fill="#3c4043">converts sample</text>
+
+  <rect x="344" y="660" width="132" height="64" rx="6" fill="#fce8e6" stroke="#c5221f"/>
+  <text x="410" y="684" text-anchor="middle" font-size="12" font-weight="bold" fill="#c5221f">EOC ISR</text>
+  <text x="410" y="702" text-anchor="middle" font-size="11" fill="#3c4043">2 lines: store raw</text>
+
+  <rect x="496" y="660" width="132" height="64" rx="6" fill="#ffffff" stroke="#5f6368"/>
+  <text x="562" y="684" text-anchor="middle" font-size="12" font-weight="bold" fill="#202124">Mailbox</text>
+  <text x="562" y="702" text-anchor="middle" font-size="11" fill="#3c4043">1 word, newest wins</text>
+
+  <rect x="648" y="660" width="132" height="64" rx="6" fill="#e6f4ea" stroke="#5f6368"/>
+  <text x="714" y="680" text-anchor="middle" font-size="12" font-weight="bold" fill="#202124">Main loop</text>
+  <text x="714" y="697" text-anchor="middle" font-size="11" fill="#3c4043">× scale → dC</text>
+  <text x="714" y="713" text-anchor="middle" font-size="11" fill="#3c4043">Classify()</text>
+
+  <rect x="800" y="660" width="120" height="64" rx="6" fill="#e6f4ea" stroke="#5f6368"/>
+  <text x="860" y="684" text-anchor="middle" font-size="12" font-weight="bold" fill="#202124">LEDs</text>
+  <text x="860" y="702" text-anchor="middle" font-size="11" fill="#3c4043">G / Y / R</text>
+
+  <line x1="172" y1="692" x2="188" y2="692" stroke="#5f6368" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="324" y1="692" x2="340" y2="692" stroke="#5f6368" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="476" y1="692" x2="492" y2="692" stroke="#5f6368" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="628" y1="692" x2="644" y2="692" stroke="#5f6368" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="780" y1="692" x2="796" y2="692" stroke="#5f6368" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <text x="180" y="650" text-anchor="middle" font-size="10" fill="#137333">trigger in silicon</text>
+  <text x="332" y="650" text-anchor="middle" font-size="10" fill="#5f6368">EOC IRQ</text>
+  <text x="484" y="650" text-anchor="middle" font-size="10" fill="#5f6368">1-word write</text>
+  <text x="636" y="650" text-anchor="middle" font-size="10" fill="#5f6368">atomic read</text>
+  <text x="788" y="650" text-anchor="middle" font-size="10" fill="#5f6368">on change</text>
+
+  <rect x="40" y="742" width="440" height="24" rx="4" fill="#e6f4ea"/>
+  <text x="260" y="758" text-anchor="middle" font-size="11" fill="#137333">jitter-critical: zero software in the trigger path</text>
+  <rect x="496" y="742" width="424" height="24" rx="4" fill="#e8f0fe"/>
+  <text x="708" y="758" text-anchor="middle" font-size="11" fill="#1a56b4">no deadline: main-loop pace is sufficient for LEDs</text>
+
+  <!-- boot order footer -->
+  <text x="52" y="802" font-size="13" font-weight="bold" fill="#202124">Boot order:</text>
+  <text x="168" y="802" font-size="12" fill="#3c4043">1. LEDs all OFF ("no claim yet")  →  2. config load  →  3. validate (fail → all LEDs ON, terminal)  →  4. sensor init  →  5. sampling armed LAST</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#5f6368"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#c5221f"/>
+    </marker>
+  </defs>
+</svg>
